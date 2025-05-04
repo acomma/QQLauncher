@@ -52,8 +52,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	}
 
 	// 显示窗口
-	ShowWindow(hWnd, nCmdShow);
-	UpdateWindow(hWnd);
+	//ShowWindow(hWnd, nCmdShow);
+	//UpdateWindow(hWnd);
 
 	// 显示通知图标
 	nid.cbSize = sizeof(NOTIFYICONDATA);
@@ -109,6 +109,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 
 			DestroyMenu(hMenu);
+		}
+	}
+	break;
+	case WM_COMMAND:
+	{
+		switch (LOWORD(wParam))
+		{
+		case ID_NOTIFYICON_MENU_EXIT:
+		{
+			// 退出程序
+			PostMessage(hWnd, WM_DESTROY, wParam, lParam);
+		}
+		break;
 		}
 	}
 	break;
