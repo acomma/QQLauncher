@@ -9,9 +9,13 @@
 HINSTANCE hInst;
 // 通知图标数据
 NOTIFYICONDATA nid;
+// 设置对话框打开状态
+BOOL bSettingDialogOpen = FALSE;
 
 // 窗口过程
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+// 设置对话框过程
+INT_PTR CALLBACK SettingDialogProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 // 程序入口
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
@@ -122,6 +126,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			PostMessage(hWnd, WM_DESTROY, wParam, lParam);
 		}
 		break;
+		case ID_NOTIFYICON_MENU_SETTING:
+		{
+			// 确保只打开一个设置对话框
+			if (!bSettingDialogOpen)
+			{
+				bSettingDialogOpen = TRUE;
+				if (DialogBox(hInst, MAKEINTRESOURCE(IDD_SETTING_DIALOG), hWnd, SettingDialogProc) == IDOK)
+				{
+					MessageBox(NULL, _T("IDOK"), _T("NTLauncher"), NULL);
+				}
+				else
+				{
+					MessageBox(NULL, _T("IDCANCEL"), _T("NTLauncher"), NULL);
+				}
+				bSettingDialogOpen = FALSE;
+			}
+			else
+			{
+				HWND hDialog = FindWindow(NULL, _T("设置"));
+				SetForegroundWindow(hDialog);
+				// 或者调用
+				//SetActiveWindow(hDialog);
+			}
+		}
+		break;
 		}
 	}
 	break;
@@ -134,4 +163,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	return 0;
+}
+
+INT_PTR CALLBACK SettingDialogProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_INITDIALOG:
+	{
+		// 在屏幕右下角弹出对话框
+		RECT rcScreen, rcDialog;
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
+		GetWindowRect(hWnd, &rcDialog);
+		int x = rcScreen.right - (rcDialog.right - rcDialog.left) - 10;
+		int y = rcScreen.bottom - (rcDialog.bottom - rcDialog.top) - 10;
+		SetWindowPos(hWnd, HWND_TOPMOST, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+
+		return TRUE;
+	}
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDOK:
+			EndDialog(hWnd, IDOK);
+			return TRUE;
+		case IDCANCEL:
+			EndDialog(hWnd, IDCANCEL);
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
