@@ -138,6 +138,11 @@
   <ItemGroup>
     <Image Include="NTLauncher.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="config.ini">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
