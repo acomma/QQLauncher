@@ -130,6 +130,8 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mojo_call_export.h" />
+    <ClInclude Include="qq_ipc.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -140,6 +142,14 @@
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="config.ini">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="MMMojoCall.dll">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="parent-ipc-core-x64.dll">
       <FileType>Document</FileType>
     </CopyFileToFolders>
   </ItemGroup>
