@@ -2,6 +2,9 @@
 #include <tchar.h>
 #include <strsafe.h>
 #include "resource.h"
+#include "qq_ipc.h"
+
+#pragma comment(lib, "MMMojoCall.lib")
 
 // 通知图标消息
 #define WM_NOTIFYICON (WM_USER + 1)
@@ -53,6 +56,12 @@ BOOL bSettingDialogOpen = FALSE;
 TCHAR appConfigPath[MAX_PATH];
 // 应用配置数据
 APP_CONFIG appConfig;
+// 用于 QQ 截图
+qqimpl::qqipc::QQIpcParentWrapper qqIpcParentWrapper;
+// 回调函数
+void __stdcall OnReceiveScreenShotMessage(void* pArg, char* msg, int arg3, char* addition_msg, int addition_msg_size);
+// 子进程 PID
+int childProcessPID;
 
 // 窗口过程
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -64,6 +73,8 @@ void GetAppConfigPath(TCHAR appConfigPath[MAX_PATH]);
 void LoadAppConfig(TCHAR* iniFile, APP_CONFIG* cfg);
 // 保存应用配置
 void SaveAppConfig(TCHAR* iniFile, APP_CONFIG* cfg);
+// 获取 parent-ipc-core-x64.dll 路径
+void GetParentIpcCorePath(char* parentIpcCorePath);
 
 // 程序入口
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
@@ -110,6 +121,28 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	// 加载应用配置
 	GetAppConfigPath(appConfigPath);
 	LoadAppConfig(appConfigPath, &appConfig);
+
+	// 初始化 QQ IPC
+	char parentIpcCorePath[MAX_PATH];
+	GetParentIpcCorePath(parentIpcCorePath);
+	bool initEnvSuccess = qqIpcParentWrapper.InitEnv(parentIpcCorePath);
+	if (!initEnvSuccess)
+	{
+		const char* err = qqIpcParentWrapper.GetLastErrStr();
+		int len = MultiByteToWideChar(CP_ACP, 0, err, -1, NULL, 0);
+		std::wstring werr(len, 0);
+		MultiByteToWideChar(CP_ACP, 0, err, -1, &werr[0], len);
+		std::wstring msg = L"调用 InitEnv 失败！" + werr;
+		MessageBox(NULL, msg.c_str(), L"NTLauncher", NULL);
+
+		return 1;
+	}
+	qqIpcParentWrapper.InitLog(0, NULL);
+	qqIpcParentWrapper.InitParentIpc();
+	char qqScreenShotExePath[MAX_PATH];
+	WideCharToMultiByte(CP_ACP, 0, appConfig.QQScreenShot, -1, qqScreenShotExePath, MAX_PATH, NULL, NULL);
+	childProcessPID = qqIpcParentWrapper.LaunchChildProcess(qqScreenShotExePath, OnReceiveScreenShotMessage, NULL, NULL, 0);
+	qqIpcParentWrapper.ConnectedToChildProcess(childProcessPID);
 
 	// 显示通知图标
 	nid.cbSize = sizeof(NOTIFYICONDATA);
@@ -166,6 +199,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			DestroyMenu(hMenu);
 		}
+		// 单击鼠标左键时发起截图
+		if (lParam == WM_LBUTTONDOWN)
+		{
+			qqIpcParentWrapper.SendIpcMessage(childProcessPID, "screenShot", NULL, 0);
+		}
 	}
 	break;
 	case WM_COMMAND:
@@ -207,6 +245,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	break;
 	case WM_DESTROY:
+		// 退出子进程
+		qqIpcParentWrapper.TerminateChildProcess(childProcessPID, 0, true);
+
 		PostQuitMessage(0);
 		break;
 	default:
@@ -410,4 +451,26 @@ void SaveAppConfig(TCHAR* iniFile, APP_CONFIG* cfg)
 	WritePrivateProfileString(TEXT("Plugin"), TEXT("CurTran"), cfg->CurTran, iniFile);
 	WritePrivateProfileString(TEXT("Plugin"), TEXT("PluginDir"), cfg->PluginDir, iniFile);
 	WritePrivateProfileString(TEXT("Plugin"), TEXT("PythonDir"), cfg->PythonDir, iniFile);
+}
+
+void GetParentIpcCorePath(char* parentIpcCorePath)
+{
+	TCHAR szExePath[MAX_PATH];
+	GetModuleFileName(NULL, szExePath, MAX_PATH);
+
+	LPTSTR p = _tcsrchr(szExePath, _T('\\'));
+	if (p) *(p + 1) = 0;
+
+	_tcscat_s(szExePath, MAX_PATH, _T("parent-ipc-core-x64.dll"));
+
+#ifdef UNICODE
+	WideCharToMultiByte(CP_ACP, 0, szExePath, -1, parentIpcCorePath, MAX_PATH, NULL, NULL);
+#else
+	strncpy_s(parentIpcCorePath, MAX_PATH, szParentIpcCorePath, _TRUNCATE);
+#endif
+}
+
+void __stdcall OnReceiveScreenShotMessage(void* pArg, char* msg, int arg3, char* addition_msg, int addition_msg_size)
+{
+	MessageBoxA(NULL, msg, "", 0);
 }
