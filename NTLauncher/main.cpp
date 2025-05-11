@@ -98,7 +98,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	// 注册窗口类
 	if (!RegisterClassEx(&wcex))
 	{
-		MessageBox(NULL, _T("调用 RegisterClassEx 失败！"), _T("NTLauncher"), NULL);
+		MessageBox(NULL, _T("调用 RegisterClassEx 失败！"), _T("NTLauncher"), MB_ICONERROR);
 		return 1;
 	}
 
@@ -110,7 +110,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	if (!hWnd)
 	{
-		MessageBox(NULL, _T("调用 CreateWindowEx 失败！"), _T("NTLauncher"), NULL);
+		MessageBox(NULL, _T("调用 CreateWindowEx 失败！"), _T("NTLauncher"), MB_ICONERROR);
 		return 1;
 	}
 
@@ -133,7 +133,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		std::wstring werr(len, 0);
 		MultiByteToWideChar(CP_ACP, 0, err, -1, &werr[0], len);
 		std::wstring msg = L"调用 InitEnv 失败！" + werr;
-		MessageBox(NULL, msg.c_str(), L"NTLauncher", NULL);
+		MessageBox(NULL, msg.c_str(), L"NTLauncher", MB_ICONERROR);
 
 		return 1;
 	}
@@ -154,7 +154,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	StringCchCopy(nid.szTip, ARRAYSIZE(nid.szTip), _T("NTLauncher"));
 	if (Shell_NotifyIcon(NIM_ADD, &nid) != TRUE)
 	{
-		MessageBox(NULL, _T("调用 Shell_NotifyIcon 失败！"), _T("NTLauncher"), NULL);
+		MessageBox(NULL, _T("调用 Shell_NotifyIcon 失败！"), _T("NTLauncher"), MB_ICONERROR);
 		return 1;
 	}
 
@@ -224,11 +224,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				bSettingDialogOpen = TRUE;
 				if (DialogBox(hInst, MAKEINTRESOURCE(IDD_SETTING_DIALOG), hWnd, SettingDialogProc) == IDOK)
 				{
-					MessageBox(NULL, _T("IDOK"), _T("NTLauncher"), NULL);
+					MessageBox(NULL, _T("IDOK"), _T("NTLauncher"), MB_ICONINFORMATION);
 				}
 				else
 				{
-					MessageBox(NULL, _T("IDCANCEL"), _T("NTLauncher"), NULL);
+					MessageBox(NULL, _T("IDCANCEL"), _T("NTLauncher"), MB_ICONINFORMATION);
 				}
 				bSettingDialogOpen = FALSE;
 			}
@@ -472,5 +472,17 @@ void GetParentIpcCorePath(char* parentIpcCorePath)
 
 void __stdcall OnReceiveScreenShotMessage(void* pArg, char* msg, int arg3, char* addition_msg, int addition_msg_size)
 {
-	MessageBoxA(NULL, msg, "", 0);
+	int len = MultiByteToWideChar(CP_ACP, 0, msg, -1, NULL, 0);
+	std::wstring wmsg(len > 1 ? len - 1 : 0, 0);
+	if (len > 1)
+		MultiByteToWideChar(CP_ACP, 0, msg, -1, &wmsg[0], len - 1);
+
+	int len1 = MultiByteToWideChar(CP_ACP, 0, addition_msg, -1, NULL, 0);
+	std::wstring waddition_msg(len1 > 1 ? len1 - 1 : 0, 0);
+	if (len1 > 1)
+		MultiByteToWideChar(CP_ACP, 0, addition_msg, -1, &waddition_msg[0], len1 - 1);
+
+	std::wstring text = L"IPC消息：" + wmsg + L"\n参数3：" + std::to_wstring(arg3) + L"\n附加信息：" + waddition_msg + L"\n附加消息大小：" + std::to_wstring(addition_msg_size);
+
+	MessageBox(NULL, text.c_str(), L"NTLauncher", MB_ICONINFORMATION);
 }
