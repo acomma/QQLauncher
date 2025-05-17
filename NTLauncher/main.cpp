@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <tchar.h>
+#include <strsafe.h>
 #include "resource.h"
 
 #define IDC_CHECK_QQSCREENSHOT               1001
@@ -32,7 +33,10 @@
 #define IDC_BUTTON_CLEARCACHE                1028
 #define IDC_BUTTON_OK                        1029
 #define IDC_BUTTON_CANCEL                    1030
+#define ID_NOTIFYICON_MENU_OPEN              40001
+#define ID_NOTIFYICON_MENU_EXIT              40002
 #define WM_APP_INIT                          (WM_APP + 0)
+#define WM_NOTIFYICON                        (WM_USER + 1)
 
 // 应用配置
 typedef struct _APP_CONFIG
@@ -77,6 +81,8 @@ HINSTANCE hInst;
 TCHAR appConfigPath[MAX_PATH];
 // 应用配置数据
 APP_CONFIG appConfig;
+// 通知图标数据
+NOTIFYICONDATA nid;
 
 // 窗口过程
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -131,6 +137,20 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	// 显示窗口
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
+
+	// 显示通知图标
+	nid.cbSize = sizeof(NOTIFYICONDATA);
+	nid.hWnd = hWnd;
+	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_GUID;
+	nid.uCallbackMessage = WM_NOTIFYICON;
+	nid.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_NTLAUNCHER));
+	nid.guidItem = { 0x30549556, 0x75c2, 0x452a, { 0xaf, 0x3c, 0x12, 0x32, 0xb, 0x53, 0x4e, 0x9 } }; // {30549556-75C2-452A-AF3C-12320B534E09}
+	StringCchCopy(nid.szTip, ARRAYSIZE(nid.szTip), _T("NTLauncher"));
+	if (Shell_NotifyIcon(NIM_ADD, &nid) != TRUE)
+	{
+		MessageBox(NULL, _T("调用 Shell_NotifyIcon 失败！"), _T("NTLauncher"), MB_ICONERROR);
+		return 1;
+	}
 
 	// 消息循环
 	MSG msg;
@@ -269,7 +289,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_WECHATUTILITY);
 		SetWindowText(hItem, appConfig.WeChatUtility);
-		
+
 		hItem = GetDlgItem(hWnd, IDC_EDIT_PYTHONDIR);
 		SetWindowText(hItem, appConfig.PythonDir);
 
@@ -299,6 +319,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendMessage(hItem, BM_SETCHECK, appConfig.EnableHotKey ? BST_CHECKED : BST_UNCHECKED, 0);
 	}
 	break;
+	case WM_NOTIFYICON:
+	{
+		// 显示通知图标弹出菜单
+		if (lParam == WM_RBUTTONUP)
+		{
+			POINT pt;
+			GetCursorPos(&pt);
+			HMENU hMenu = CreatePopupMenu();
+			AppendMenu(hMenu, MF_STRING, ID_NOTIFYICON_MENU_OPEN, L"打开");
+			AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+			AppendMenu(hMenu, MF_STRING, ID_NOTIFYICON_MENU_EXIT, L"退出");
+			SetForegroundWindow(hWnd);
+			TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hWnd, NULL);
+			DestroyMenu(hMenu);
+		}
+	}
+	break;
 	case WM_PAINT:
 	{
 		PAINTSTRUCT ps;
@@ -306,7 +343,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		EndPaint(hWnd, &ps);
 	}
 	break;
-	case WM_COMMAND: {
+	case WM_COMMAND:
+	{
 		switch (LOWORD(wParam))
 		{
 		case IDC_BUTTON_OK:
@@ -397,9 +435,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 		}
 		break;
+		case ID_NOTIFYICON_MENU_OPEN:
+		{
+			ShowWindow(hWnd, SW_SHOW);
+			SetForegroundWindow(hWnd);
 		}
 		break;
+		case ID_NOTIFYICON_MENU_EXIT:
+		{
+			PostMessage(hWnd, WM_DESTROY, wParam, lParam);
+		}
+		break;
+		}
 	}
+	break;
+	case WM_CLOSE:
+		// 拦截关闭请求，改为隐藏窗口
+		ShowWindow(hWnd, SW_HIDE);
+		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
