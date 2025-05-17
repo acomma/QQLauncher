@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <tchar.h>
+#include "resource.h"
 
 #define IDC_CHECK_QQSCREENSHOT               1001
 #define IDC_CHECK_WECHATOCR                  1002
@@ -102,12 +103,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = hInstance;
-	wcex.hIcon = LoadIcon(wcex.hInstance, IDI_APPLICATION);
+	wcex.hIcon = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_NTLAUNCHER));
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = NULL;
 	wcex.lpszClassName = _T("NTLauncher");
-	wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
+	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_NTLAUNCHER));
 
 	// ×¢²á´°¿ÚÀà
 	if (!RegisterClassEx(&wcex))
