@@ -124,24 +124,24 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = NULL;
-	wcex.lpszClassName = _T("NTLauncher");
+	wcex.lpszClassName = L"NTLauncher";
 	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_NTLAUNCHER));
 
 	// 注册窗口类
 	if (!RegisterClassEx(&wcex))
 	{
-		MessageBox(NULL, _T("调用 RegisterClassEx 失败！"), _T("NTLauncher"), NULL);
+		MessageBox(NULL, L"调用 RegisterClassEx 失败！", L"NTLauncher", NULL);
 		return 1;
 	}
 
 	hInst = hInstance;
 
 	// 创建窗口
-	HWND hWnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, _T("NTLauncher"), _T("NTLauncher"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 870, 600, NULL, NULL, hInstance, NULL);
+	HWND hWnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, L"NTLauncher", L"NTLauncher", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 870, 600, NULL, NULL, hInstance, NULL);
 
 	if (!hWnd)
 	{
-		MessageBox(NULL, _T("调用 CreateWindowEx 失败！"), _T("NTLauncher"), NULL);
+		MessageBox(NULL, L"调用 CreateWindowEx 失败！", L"NTLauncher", NULL);
 		return 1;
 	}
 
@@ -156,10 +156,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	nid.uCallbackMessage = WM_NOTIFYICON;
 	nid.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_NTLAUNCHER));
 	nid.guidItem = { 0x30549556, 0x75c2, 0x452a, { 0xaf, 0x3c, 0x12, 0x32, 0xb, 0x53, 0x4e, 0x9 } }; // {30549556-75C2-452A-AF3C-12320B534E09}
-	StringCchCopy(nid.szTip, ARRAYSIZE(nid.szTip), _T("NTLauncher"));
+	StringCchCopy(nid.szTip, ARRAYSIZE(nid.szTip), L"NTLauncher");
 	if (Shell_NotifyIcon(NIM_ADD, &nid) != TRUE)
 	{
-		MessageBox(NULL, _T("调用 Shell_NotifyIcon 失败！"), _T("NTLauncher"), MB_ICONERROR);
+		MessageBox(NULL, L"调用 Shell_NotifyIcon 失败！", L"NTLauncher", MB_ICONERROR);
 		return 1;
 	}
 
@@ -335,9 +335,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		TCHAR temp[96];
 		_tcsncpy_s(temp, appConfig.HotKey, _TRUNCATE);
 		TCHAR* context = NULL;
-		TCHAR* hotkey1 = _tcstok_s(temp, TEXT("+"), &context);
-		TCHAR* hotkey2 = _tcstok_s(NULL, TEXT("+"), &context);
-		TCHAR* hotkey3 = _tcstok_s(NULL, TEXT("+"), &context);
+		TCHAR* hotkey1 = _tcstok_s(temp, L"+", & context);
+		TCHAR* hotkey2 = _tcstok_s(NULL, L"+", & context);
+		TCHAR* hotkey3 = _tcstok_s(NULL, L"+", &context);
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_HOTKEYCTRL);
 		SetWindowText(hItem, hotkey1);
@@ -462,7 +462,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				hItem = GetDlgItem(hWnd, IDC_EDIT_HOTKEYA);
 				GetWindowText(hItem, hotkey3, 32);
 
-				_stprintf_s(hotkey, _T("%s+%s+%s"), hotkey1, hotkey2, hotkey3);
+				_stprintf_s(hotkey, L"%s+%s+%s", hotkey1, hotkey2, hotkey3);
 				_tcscpy_s(appConfig.HotKey, 96, hotkey);
 
 				hItem = GetDlgItem(hWnd, IDC_CHECK_HOTKEY);
@@ -502,96 +502,96 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void GetAppConfigPath(TCHAR cfgPath[MAX_PATH])
+void GetAppConfigPath(TCHAR appConfigPath[MAX_PATH])
 {
 	// 获取 exe 全路径
 	TCHAR szExePath[MAX_PATH];
 	GetModuleFileName(NULL, szExePath, MAX_PATH);
 
 	// 找到最后一个 '\'，截断为目录，拼接 config.ini
-	LPTSTR p = _tcsrchr(szExePath, _T('\\'));
+	LPTSTR p = _tcsrchr(szExePath, L'\\');
 	// 仅保留"路径\"
 	if (p) *(p + 1) = 0;
 
 	// 添加文件名
-	_tcscat_s(szExePath, MAX_PATH, _T("config.ini"));
+	_tcscat_s(szExePath, MAX_PATH, L"config.ini");
 
 	// 输出
-	_tcscpy_s(cfgPath, MAX_PATH, szExePath);
+	_tcscpy_s(appConfigPath, MAX_PATH, szExePath);
 }
 
 void LoadAppConfig(TCHAR* iniFile, APP_CONFIG* cfg)
 {
 	// ExePath
-	GetPrivateProfileString(TEXT("ExePath"), TEXT("QQScreenShot"), TEXT(""), cfg->QQScreenShot, MAX_PATH, iniFile);
-	GetPrivateProfileString(TEXT("ExePath"), TEXT("UsrLib"), TEXT(""), cfg->UsrLib, MAX_PATH, iniFile);
-	GetPrivateProfileString(TEXT("ExePath"), TEXT("WeChatOCR"), TEXT(""), cfg->WeChatOCR, MAX_PATH, iniFile);
-	GetPrivateProfileString(TEXT("ExePath"), TEXT("WeChatUtility"), TEXT(""), cfg->WeChatUtility, MAX_PATH, iniFile);
+	GetPrivateProfileString(L"ExePath", L"QQScreenShot", L"", cfg->QQScreenShot, MAX_PATH, iniFile);
+	GetPrivateProfileString(L"ExePath", L"UsrLib", L"", cfg->UsrLib, MAX_PATH, iniFile);
+	GetPrivateProfileString(L"ExePath", L"WeChatOCR", L"", cfg->WeChatOCR, MAX_PATH, iniFile);
+	GetPrivateProfileString(L"ExePath", L"WeChatUtility", L"", cfg->WeChatUtility, MAX_PATH, iniFile);
 
 	// General
-	cfg->AutoExitClear = GetPrivateProfileInt(TEXT("General"), TEXT("AutoExitClear"), 0, iniFile);
-	cfg->AutoNTVOpen = GetPrivateProfileInt(TEXT("General"), TEXT("AutoNTVOpen"), 0, iniFile);
-	cfg->AutoRun = GetPrivateProfileInt(TEXT("General"), TEXT("AutoRun"), 0, iniFile);
-	cfg->DebugConsole = GetPrivateProfileInt(TEXT("General"), TEXT("DebugConsole"), 0, iniFile);
-	cfg->EnableHotKey = GetPrivateProfileInt(TEXT("General"), TEXT("EnableHotKey"), 0, iniFile);
-	cfg->EnableOCR = GetPrivateProfileInt(TEXT("General"), TEXT("EnableOCR"), 0, iniFile);
-	cfg->EnablePlugin = GetPrivateProfileInt(TEXT("General"), TEXT("EnablePlugin"), 0, iniFile);
-	cfg->EnableScreenShot = GetPrivateProfileInt(TEXT("General"), TEXT("EnableScreenShot"), 0, iniFile);
-	cfg->EnableUtility = GetPrivateProfileInt(TEXT("General"), TEXT("EnableUtility"), 0, iniFile);
-	cfg->FisrtRun = GetPrivateProfileInt(TEXT("General"), TEXT("FisrtRun"), 0, iniFile);
-	GetPrivateProfileString(TEXT("General"), TEXT("HotKey"), TEXT(""), cfg->HotKey, 96, iniFile);
-	cfg->KillXPlugin = GetPrivateProfileInt(TEXT("General"), TEXT("KillXPlugin"), 0, iniFile);
-	cfg->RunTip = GetPrivateProfileInt(TEXT("General"), TEXT("RunTip"), 0, iniFile);
-	cfg->ScrollVol = GetPrivateProfileInt(TEXT("General"), TEXT("ScrollVol"), 0, iniFile);
+	cfg->AutoExitClear = GetPrivateProfileInt(L"General", L"AutoExitClear", 0, iniFile);
+	cfg->AutoNTVOpen = GetPrivateProfileInt(L"General", L"AutoNTVOpen", 0, iniFile);
+	cfg->AutoRun = GetPrivateProfileInt(L"General", L"AutoRun", 0, iniFile);
+	cfg->DebugConsole = GetPrivateProfileInt(L"General", L"DebugConsole", 0, iniFile);
+	cfg->EnableHotKey = GetPrivateProfileInt(L"General", L"EnableHotKey", 0, iniFile);
+	cfg->EnableOCR = GetPrivateProfileInt(L"General", L"EnableOCR", 0, iniFile);
+	cfg->EnablePlugin = GetPrivateProfileInt(L"General", L"EnablePlugin", 0, iniFile);
+	cfg->EnableScreenShot = GetPrivateProfileInt(L"General", L"EnableScreenShot", 0, iniFile);
+	cfg->EnableUtility = GetPrivateProfileInt(L"General", L"EnableUtility", 0, iniFile);
+	cfg->FisrtRun = GetPrivateProfileInt(L"General", L"FisrtRun", 0, iniFile);
+	GetPrivateProfileString(L"General", L"HotKey", L"", cfg->HotKey, 96, iniFile);
+	cfg->KillXPlugin = GetPrivateProfileInt(L"General", L"KillXPlugin", 0, iniFile);
+	cfg->RunTip = GetPrivateProfileInt(L"General", L"RunTip", 0, iniFile);
+	cfg->ScrollVol = GetPrivateProfileInt(L"General", L"ScrollVol", 0, iniFile);
 
 	// NTViewer
-	cfg->DbgConsole = GetPrivateProfileInt(TEXT("NTViewer"), TEXT("DbgConsole"), 0, iniFile);
-	cfg->LaunchShow = GetPrivateProfileInt(TEXT("NTViewer"), TEXT("LaunchShow"), 0, iniFile);
+	cfg->DbgConsole = GetPrivateProfileInt(L"NTViewer", L"DbgConsole", 0, iniFile);
+	cfg->LaunchShow = GetPrivateProfileInt(L"NTViewer", L"LaunchShow", 0, iniFile);
 
 	// Plugin
-	GetPrivateProfileString(TEXT("Plugin"), TEXT("CurOCR"), TEXT(""), cfg->CurOCR, MAX_PATH, iniFile);
-	GetPrivateProfileString(TEXT("Plugin"), TEXT("CurSearch"), TEXT(""), cfg->CurSearch, MAX_PATH, iniFile);
-	GetPrivateProfileString(TEXT("Plugin"), TEXT("CurSoutu"), TEXT(""), cfg->CurSoutu, MAX_PATH, iniFile);
-	GetPrivateProfileString(TEXT("Plugin"), TEXT("CurTran"), TEXT(""), cfg->CurTran, MAX_PATH, iniFile);
-	GetPrivateProfileString(TEXT("Plugin"), TEXT("PluginDir"), TEXT(""), cfg->PluginDir, MAX_PATH, iniFile);
-	GetPrivateProfileString(TEXT("Plugin"), TEXT("PythonDir"), TEXT(""), cfg->PythonDir, MAX_PATH, iniFile);
+	GetPrivateProfileString(L"Plugin", L"CurOCR", L"", cfg->CurOCR, MAX_PATH, iniFile);
+	GetPrivateProfileString(L"Plugin", L"CurSearch", L"", cfg->CurSearch, MAX_PATH, iniFile);
+	GetPrivateProfileString(L"Plugin", L"CurSoutu", L"", cfg->CurSoutu, MAX_PATH, iniFile);
+	GetPrivateProfileString(L"Plugin", L"CurTran", L"", cfg->CurTran, MAX_PATH, iniFile);
+	GetPrivateProfileString(L"Plugin", L"PluginDir", L"", cfg->PluginDir, MAX_PATH, iniFile);
+	GetPrivateProfileString(L"Plugin", L"PythonDir", L"", cfg->PythonDir, MAX_PATH, iniFile);
 }
 
 void SaveAppConfig(TCHAR* iniFile, APP_CONFIG* cfg)
 {
 	// ExePath
-	WritePrivateProfileString(TEXT("ExePath"), TEXT("QQScreenShot"), cfg->QQScreenShot, iniFile);
-	WritePrivateProfileString(TEXT("ExePath"), TEXT("UsrLib"), cfg->UsrLib, iniFile);
-	WritePrivateProfileString(TEXT("ExePath"), TEXT("WeChatOCR"), cfg->WeChatOCR, iniFile);
-	WritePrivateProfileString(TEXT("ExePath"), TEXT("WeChatUtility"), cfg->WeChatUtility, iniFile);
+	WritePrivateProfileString(L"ExePath", L"QQScreenShot", cfg->QQScreenShot, iniFile);
+	WritePrivateProfileString(L"ExePath", L"UsrLib", cfg->UsrLib, iniFile);
+	WritePrivateProfileString(L"ExePath", L"WeChatOCR", cfg->WeChatOCR, iniFile);
+	WritePrivateProfileString(L"ExePath", L"WeChatUtility", cfg->WeChatUtility, iniFile);
 
 	// General
-	WritePrivateProfileString(TEXT("General"), TEXT("AutoExitClear"), cfg->AutoExitClear ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("AutoNTVOpen"), cfg->AutoNTVOpen ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("AutoRun"), cfg->AutoRun ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("DebugConsole"), cfg->DebugConsole ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("EnableHotKey"), cfg->EnableHotKey ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("EnableOCR"), cfg->EnableOCR ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("EnablePlugin"), cfg->EnablePlugin ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("EnableScreenShot"), cfg->EnableScreenShot ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("EnableUtility"), cfg->EnableUtility ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("FisrtRun"), cfg->FisrtRun ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("HotKey"), cfg->HotKey, iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("KillXPlugin"), cfg->KillXPlugin ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("RunTip"), cfg->RunTip ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("General"), TEXT("ScrollVol"), cfg->ScrollVol ? TEXT("1") : TEXT("0"), iniFile);
+	WritePrivateProfileString(L"General", L"AutoExitClear", cfg->AutoExitClear ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"AutoNTVOpen", cfg->AutoNTVOpen ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"AutoRun", cfg->AutoRun ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"DebugConsole", cfg->DebugConsole ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"EnableHotKey", cfg->EnableHotKey ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"EnableOCR", cfg->EnableOCR ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"EnablePlugin", cfg->EnablePlugin ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"EnableScreenShot", cfg->EnableScreenShot ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"EnableUtility", cfg->EnableUtility ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"FisrtRun", cfg->FisrtRun ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"HotKey", cfg->HotKey, iniFile);
+	WritePrivateProfileString(L"General", L"KillXPlugin", cfg->KillXPlugin ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"RunTip", cfg->RunTip ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"General", L"ScrollVol", cfg->ScrollVol ? L"1" : L"0", iniFile);
 
 	// NTViewer
-	WritePrivateProfileString(TEXT("NTViewer"), TEXT("DbgConsole"), cfg->DbgConsole ? TEXT("1") : TEXT("0"), iniFile);
-	WritePrivateProfileString(TEXT("NTViewer"), TEXT("LaunchShow"), cfg->LaunchShow ? TEXT("1") : TEXT("0"), iniFile);
+	WritePrivateProfileString(L"NTViewer", L"DbgConsole", cfg->DbgConsole ? L"1" : L"0", iniFile);
+	WritePrivateProfileString(L"NTViewer", L"LaunchShow", cfg->LaunchShow ? L"1" : L"0", iniFile);
 
 	// Plugin
-	WritePrivateProfileString(TEXT("Plugin"), TEXT("CurOCR"), cfg->CurOCR, iniFile);
-	WritePrivateProfileString(TEXT("Plugin"), TEXT("CurSearch"), cfg->CurSearch, iniFile);
-	WritePrivateProfileString(TEXT("Plugin"), TEXT("CurSoutu"), cfg->CurSoutu, iniFile);
-	WritePrivateProfileString(TEXT("Plugin"), TEXT("CurTran"), cfg->CurTran, iniFile);
-	WritePrivateProfileString(TEXT("Plugin"), TEXT("PluginDir"), cfg->PluginDir, iniFile);
-	WritePrivateProfileString(TEXT("Plugin"), TEXT("PythonDir"), cfg->PythonDir, iniFile);
+	WritePrivateProfileString(L"Plugin", L"CurOCR", cfg->CurOCR, iniFile);
+	WritePrivateProfileString(L"Plugin", L"CurSearch", cfg->CurSearch, iniFile);
+	WritePrivateProfileString(L"Plugin", L"CurSoutu", cfg->CurSoutu, iniFile);
+	WritePrivateProfileString(L"Plugin", L"CurTran", cfg->CurTran, iniFile);
+	WritePrivateProfileString(L"Plugin", L"PluginDir", cfg->PluginDir, iniFile);
+	WritePrivateProfileString(L"Plugin", L"PythonDir", cfg->PythonDir, iniFile);
 }
 
 void GetParentIpcCorePath(char* parentIpcCorePath)
@@ -599,10 +599,10 @@ void GetParentIpcCorePath(char* parentIpcCorePath)
 	TCHAR szExePath[MAX_PATH];
 	GetModuleFileName(NULL, szExePath, MAX_PATH);
 
-	LPTSTR p = _tcsrchr(szExePath, _T('\\'));
+	LPTSTR p = _tcsrchr(szExePath, L'\\');
 	if (p) *(p + 1) = 0;
 
-	_tcscat_s(szExePath, MAX_PATH, _T("parent-ipc-core-x64.dll"));
+	_tcscat_s(szExePath, MAX_PATH, L"parent-ipc-core-x64.dll");
 
 #ifdef UNICODE
 	WideCharToMultiByte(CP_ACP, 0, szExePath, -1, parentIpcCorePath, MAX_PATH, NULL, NULL);
