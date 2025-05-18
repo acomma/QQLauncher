@@ -135,6 +135,8 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mojo_call_export.h" />
+    <ClInclude Include="qq_ipc.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -142,6 +144,14 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="NTLauncher.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="MMMojoCall.dll">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="parent-ipc-core-x64.dll">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

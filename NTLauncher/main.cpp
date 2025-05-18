@@ -2,6 +2,9 @@
 #include <tchar.h>
 #include <strsafe.h>
 #include "resource.h"
+#include "qq_ipc.h"
+
+#pragma comment(lib, "MMMojoCall.lib")
 
 #define IDC_CHECK_QQSCREENSHOT               1001
 #define IDC_CHECK_WECHATOCR                  1002
@@ -83,6 +86,10 @@ TCHAR appConfigPath[MAX_PATH];
 APP_CONFIG appConfig;
 // 通知图标数据
 NOTIFYICONDATA nid;
+// 用于 QQ 截图
+qqimpl::qqipc::QQIpcParentWrapper qqIpcParentWrapper;
+// 子进程 PID
+int childProcessPID;
 
 // 窗口过程
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -92,6 +99,10 @@ void GetAppConfigPath(TCHAR appConfigPath[MAX_PATH]);
 void LoadAppConfig(TCHAR* iniFile, APP_CONFIG* cfg);
 // 保存应用配置
 void SaveAppConfig(TCHAR* iniFile, APP_CONFIG* cfg);
+// 获取 parent-ipc-core-x64.dll 路径
+void GetParentIpcCorePath(char* parentIpcCorePath);
+// 回调函数
+void __stdcall OnReceiveScreenShotMessage(void* pArg, char* msg, int arg3, char* addition_msg, int addition_msg_size);
 
 // 程序入口
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
@@ -151,6 +162,28 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		MessageBox(NULL, _T("调用 Shell_NotifyIcon 失败！"), _T("NTLauncher"), MB_ICONERROR);
 		return 1;
 	}
+
+	// 初始化 QQ IPC
+	char parentIpcCorePath[MAX_PATH];
+	GetParentIpcCorePath(parentIpcCorePath);
+	bool initEnvSuccess = qqIpcParentWrapper.InitEnv(parentIpcCorePath);
+	if (!initEnvSuccess)
+	{
+		const char* err = qqIpcParentWrapper.GetLastErrStr();
+		int len = MultiByteToWideChar(CP_ACP, 0, err, -1, NULL, 0);
+		std::wstring werr(len, 0);
+		MultiByteToWideChar(CP_ACP, 0, err, -1, &werr[0], len);
+		std::wstring msg = L"调用 InitEnv 失败！" + werr;
+		MessageBox(NULL, msg.c_str(), L"NTLauncher", MB_ICONERROR);
+
+		return 1;
+	}
+	qqIpcParentWrapper.InitLog(0, NULL);
+	qqIpcParentWrapper.InitParentIpc();
+	char qqScreenShotExePath[MAX_PATH];
+	WideCharToMultiByte(CP_ACP, 0, appConfig.QQScreenShot, -1, qqScreenShotExePath, MAX_PATH, NULL, NULL);
+	childProcessPID = qqIpcParentWrapper.LaunchChildProcess(qqScreenShotExePath, OnReceiveScreenShotMessage, NULL, NULL, 0);
+	qqIpcParentWrapper.ConnectedToChildProcess(childProcessPID);
 
 	// 消息循环
 	MSG msg;
@@ -333,6 +366,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SetForegroundWindow(hWnd);
 			TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hWnd, NULL);
 			DestroyMenu(hMenu);
+		}
+		// 单击鼠标左键时发起截图
+		if (lParam == WM_LBUTTONDOWN && appConfig.EnableScreenShot)
+		{
+			qqIpcParentWrapper.SendIpcMessage(childProcessPID, "screenShot", NULL, 0);
 		}
 	}
 	break;
@@ -554,4 +592,38 @@ void SaveAppConfig(TCHAR* iniFile, APP_CONFIG* cfg)
 	WritePrivateProfileString(TEXT("Plugin"), TEXT("CurTran"), cfg->CurTran, iniFile);
 	WritePrivateProfileString(TEXT("Plugin"), TEXT("PluginDir"), cfg->PluginDir, iniFile);
 	WritePrivateProfileString(TEXT("Plugin"), TEXT("PythonDir"), cfg->PythonDir, iniFile);
+}
+
+void GetParentIpcCorePath(char* parentIpcCorePath)
+{
+	TCHAR szExePath[MAX_PATH];
+	GetModuleFileName(NULL, szExePath, MAX_PATH);
+
+	LPTSTR p = _tcsrchr(szExePath, _T('\\'));
+	if (p) *(p + 1) = 0;
+
+	_tcscat_s(szExePath, MAX_PATH, _T("parent-ipc-core-x64.dll"));
+
+#ifdef UNICODE
+	WideCharToMultiByte(CP_ACP, 0, szExePath, -1, parentIpcCorePath, MAX_PATH, NULL, NULL);
+#else
+	strncpy_s(parentIpcCorePath, MAX_PATH, szParentIpcCorePath, _TRUNCATE);
+#endif
+}
+
+void __stdcall OnReceiveScreenShotMessage(void* pArg, char* msg, int arg3, char* addition_msg, int addition_msg_size)
+{
+	int len = MultiByteToWideChar(CP_ACP, 0, msg, -1, NULL, 0);
+	std::wstring wmsg(len > 1 ? len - 1 : 0, 0);
+	if (len > 1)
+		MultiByteToWideChar(CP_ACP, 0, msg, -1, &wmsg[0], len - 1);
+
+	int len1 = MultiByteToWideChar(CP_ACP, 0, addition_msg, -1, NULL, 0);
+	std::wstring waddition_msg(len1 > 1 ? len1 - 1 : 0, 0);
+	if (len1 > 1)
+		MultiByteToWideChar(CP_ACP, 0, addition_msg, -1, &waddition_msg[0], len1 - 1);
+
+	std::wstring text = L"IPC消息：" + wmsg + L"\n参数3：" + std::to_wstring(arg3) + L"\n附加信息：" + waddition_msg + L"\n附加消息大小：" + std::to_wstring(addition_msg_size);
+
+	MessageBox(NULL, text.c_str(), L"NTLauncher", MB_ICONINFORMATION);
 }
