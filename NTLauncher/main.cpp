@@ -492,6 +492,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		ShowWindow(hWnd, SW_HIDE);
 		break;
 	case WM_DESTROY:
+		// 退出子进程
+		qqIpcParentWrapper.TerminateChildProcess(childProcessPID, 0, true);
+
 		PostQuitMessage(0);
 		break;
 	default:
