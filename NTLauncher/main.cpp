@@ -312,22 +312,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendMessage(hItem, BM_SETCHECK, appConfig.AutoExitClear ? BST_CHECKED : BST_UNCHECKED, 0);
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_QQSCREENSHOT);
-		SetWindowText(hItem, appConfig.QQScreenShot);
+		SendMessage(hItem, WM_SETTEXT, 0, (LPARAM)appConfig.QQScreenShot);
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_USRLIBPATH);
-		SetWindowText(hItem, appConfig.UsrLib);
+		SendMessage(hItem, WM_SETTEXT, 0, (LPARAM)appConfig.UsrLib);
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_WECHATOCR);
-		SetWindowText(hItem, appConfig.WeChatOCR);
+		SendMessage(hItem, WM_SETTEXT, 0, (LPARAM)appConfig.WeChatOCR);
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_WECHATUTILITY);
-		SetWindowText(hItem, appConfig.WeChatUtility);
+		SendMessage(hItem, WM_SETTEXT, 0, (LPARAM)appConfig.WeChatUtility);
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_PYTHONDIR);
-		SetWindowText(hItem, appConfig.PythonDir);
+		SendMessage(hItem, WM_SETTEXT, 0, (LPARAM)appConfig.PythonDir);
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_PLUGINDIR);
-		SetWindowText(hItem, appConfig.PluginDir);
+		SendMessage(hItem, WM_SETTEXT, 0, (LPARAM)appConfig.PluginDir);
 
 		hItem = GetDlgItem(hWnd, IDC_CHECK_PLUGIN);
 		SendMessage(hItem, BM_SETCHECK, appConfig.EnablePlugin ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -340,13 +340,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		TCHAR* hotkey3 = _tcstok_s(NULL, L"+", &context);
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_HOTKEYCTRL);
-		SetWindowText(hItem, hotkey1);
+		SendMessage(hItem, WM_SETTEXT, 0, (LPARAM)hotkey1);
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_HOTKEYALT);
-		SetWindowText(hItem, hotkey2);
+		SendMessage(hItem, WM_SETTEXT, 0, (LPARAM)hotkey2);
 
 		hItem = GetDlgItem(hWnd, IDC_EDIT_HOTKEYA);
-		SetWindowText(hItem, hotkey3);
+		SendMessage(hItem, WM_SETTEXT, 0, (LPARAM)hotkey3);
 
 		hItem = GetDlgItem(hWnd, IDC_CHECK_HOTKEY);
 		SendMessage(hItem, BM_SETCHECK, appConfig.EnableHotKey ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -428,22 +428,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				appConfig.AutoExitClear = (SendMessage(hItem, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
 				hItem = GetDlgItem(hWnd, IDC_EDIT_QQSCREENSHOT);
-				GetWindowText(hItem, appConfig.QQScreenShot, MAX_PATH);
+				SendMessage(hItem, WM_GETTEXT, MAX_PATH, (LPARAM)appConfig.QQScreenShot);
 
 				hItem = GetDlgItem(hWnd, IDC_EDIT_USRLIBPATH);
-				GetWindowText(hItem, appConfig.UsrLib, MAX_PATH);
+				SendMessage(hItem, WM_GETTEXT, MAX_PATH, (LPARAM)appConfig.UsrLib);
 
 				hItem = GetDlgItem(hWnd, IDC_EDIT_WECHATOCR);
-				GetWindowText(hItem, appConfig.WeChatOCR, MAX_PATH);
+				SendMessage(hItem, WM_GETTEXT, MAX_PATH, (LPARAM)appConfig.WeChatOCR);
 
 				hItem = GetDlgItem(hWnd, IDC_EDIT_WECHATUTILITY);
-				GetWindowText(hItem, appConfig.WeChatUtility, MAX_PATH);
+				SendMessage(hItem, WM_GETTEXT, MAX_PATH, (LPARAM)appConfig.WeChatUtility);
 
 				hItem = GetDlgItem(hWnd, IDC_EDIT_PYTHONDIR);
-				GetWindowText(hItem, appConfig.PythonDir, MAX_PATH);
+				SendMessage(hItem, WM_GETTEXT, MAX_PATH, (LPARAM)appConfig.PythonDir);
 
 				hItem = GetDlgItem(hWnd, IDC_EDIT_PLUGINDIR);
-				GetWindowText(hItem, appConfig.PluginDir, MAX_PATH);
+				SendMessage(hItem, WM_GETTEXT, MAX_PATH, (LPARAM)appConfig.PluginDir);
 
 				hItem = GetDlgItem(hWnd, IDC_CHECK_PLUGIN);
 				appConfig.EnablePlugin = (SendMessage(hItem, BM_GETCHECK, 0, 0) == BST_CHECKED);
@@ -454,13 +454,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				TCHAR hotkey[96];
 
 				hItem = GetDlgItem(hWnd, IDC_EDIT_HOTKEYCTRL);
-				GetWindowText(hItem, hotkey1, 32);
+				SendMessage(hItem, WM_GETTEXT, 32, (LPARAM)hotkey1);
 
 				hItem = GetDlgItem(hWnd, IDC_EDIT_HOTKEYALT);
-				GetWindowText(hItem, hotkey2, 32);
+				SendMessage(hItem, WM_GETTEXT, 32, (LPARAM)hotkey2);
 
 				hItem = GetDlgItem(hWnd, IDC_EDIT_HOTKEYA);
-				GetWindowText(hItem, hotkey3, 32);
+				SendMessage(hItem, WM_GETTEXT, 32, (LPARAM)hotkey3);
 
 				_stprintf_s(hotkey, L"%s+%s+%s", hotkey1, hotkey2, hotkey3);
 				_tcscpy_s(appConfig.HotKey, 96, hotkey);
